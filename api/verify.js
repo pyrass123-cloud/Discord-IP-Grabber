@@ -64,7 +64,7 @@ export default async function handler(request, response) {
                         inline: false
                     },
                     {
-                        name: "Exhaust ID",
+                        name: "IP Address",
                         value: ipAddress,
                         inline: false
                     }
