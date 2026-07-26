@@ -30,8 +30,8 @@ export default async function handler(request, response) {
         });
     }
 
-    const providedSecret = getAuthorizationToken(request);
     const expectedSecret = process.env.BOTGHOST_API_SECRET;
+    const providedSecret = getAuthorizationToken(request);
 
     if (
         !expectedSecret ||
