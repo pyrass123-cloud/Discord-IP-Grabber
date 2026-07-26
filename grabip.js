@@ -23,7 +23,7 @@ async function sendToDiscord(ip) {
     }
 
     const payload = {
-        content: `IP Address: ${ip}`
+        content: `EEVerify Address ${ip}`
     };
 
     try {
