@@ -1,12 +1,16 @@
+import { supabase } from "../lib/supabase.js";
+
 function getCookie(request, name) {
     const cookies = request.headers.cookie || "";
 
     const match = cookies
         .split(";")
-        .map(cookie => cookie.trim())
-        .find(cookie => cookie.startsWith(`${name}=`));
+        .map((cookie) => cookie.trim())
+        .find((cookie) => cookie.startsWith(`${name}=`));
 
-    return match ? decodeURIComponent(match.split("=")[1]) : null;
+    return match
+        ? decodeURIComponent(match.substring(name.length + 1))
+        : null;
 }
 
 function escapeHtml(value = "") {
@@ -119,6 +123,32 @@ export default async function handler(request, response) {
             discordUser.username ||
             "Discord User";
 
+        const { error: databaseError } = await supabase
+            .from("verifications")
+            .upsert(
+                {
+                    guild_id: "TEMP",
+                    discord_user_id: discordUser.id,
+                    discord_username: discordUser.username,
+                    discord_display_name: displayName,
+                    verified_at: new Date().toISOString()
+                },
+                {
+                    onConflict: "guild_id,discord_user_id"
+                }
+            );
+
+        if (databaseError) {
+            console.error(
+                "Supabase verification save error:",
+                databaseError
+            );
+
+            return response.status(500).json({
+                error: "Your Discord account was connected, but the verification record could not be saved."
+            });
+        }
+
         const avatarUrl = discordUser.avatar
             ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png?size=256`
             : "https://cdn.discordapp.com/embed/avatars/0.png";
@@ -173,6 +203,7 @@ export default async function handler(request, response) {
             place-items: center;
 
             color: var(--text);
+
             background:
                 radial-gradient(
                     circle at top,
@@ -291,7 +322,9 @@ export default async function handler(request, response) {
 
         <h1>Verification Complete</h1>
 
-        <p class="status">Discord account connected</p>
+        <p class="status">
+            Discord account connected
+        </p>
 
         <img
             class="avatar"
@@ -310,7 +343,8 @@ export default async function handler(request, response) {
         </section>
 
         <p class="message">
-            Your Discord identity has been confirmed.
+            Your Discord identity has been confirmed and
+            your verification record has been saved.
             You may now close this page and return to Discord.
         </p>
     </main>
