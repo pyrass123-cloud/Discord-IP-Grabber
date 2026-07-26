@@ -30,18 +30,17 @@
         .card {
             width: min(420px, 100%);
             padding: 32px;
+            background: #161b22;
             border: 1px solid #30363d;
             border-radius: 14px;
-            background: #161b22;
             text-align: center;
         }
 
         h1 {
-            margin: 0 0 10px;
+            margin-top: 0;
         }
 
         p {
-            margin: 0 0 24px;
             color: #aeb8c4;
             line-height: 1.5;
         }
@@ -49,48 +48,43 @@
         input {
             width: 100%;
             padding: 13px;
-            border: 1px solid #30363d;
-            border-radius: 8px;
+            margin-top: 12px;
             background: #0d1117;
             color: white;
+            border: 1px solid #30363d;
+            border-radius: 8px;
             font-size: 16px;
-            outline: none;
-        }
-
-        input:focus {
-            border-color: #5865f2;
         }
 
         button {
             width: 100%;
-            margin-top: 12px;
             padding: 13px;
-            border: 0;
-            border-radius: 8px;
+            margin-top: 12px;
             background: #5865f2;
             color: white;
+            border: none;
+            border-radius: 8px;
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
         }
 
         button:disabled {
-            cursor: not-allowed;
             opacity: 0.6;
+            cursor: not-allowed;
         }
 
         #status {
             min-height: 22px;
             margin-top: 16px;
-            color: #aeb8c4;
         }
 
         .success {
-            color: #3fb950 !important;
+            color: #3fb950;
         }
 
         .error {
-            color: #f85149 !important;
+            color: #f85149;
         }
     </style>
 </head>
@@ -100,23 +94,20 @@
         <h1 id="title">Discord Verification</h1>
 
         <p id="description">
-            Enter your Discord username. It will be sent to the server’s
-            private verification channel.
+            Enter your Discord username to verify.
         </p>
 
         <form id="verification-form">
             <input
                 id="discord-name"
-                name="discordName"
                 type="text"
                 placeholder="Discord username"
                 minlength="2"
                 maxlength="64"
-                autocomplete="off"
                 required
             >
 
-            <button id="submit-button" type="submit">
+            <button id="verify-button" type="submit">
                 Verify
             </button>
         </form>
@@ -124,56 +115,6 @@
         <div id="status"></div>
     </main>
 
-    <script>
-        const form = document.getElementById("verification-form");
-        const input = document.getElementById("discord-name");
-        const button = document.getElementById("submit-button");
-        const status = document.getElementById("status");
-        const title = document.getElementById("title");
-        const description = document.getElementById("description");
-
-        form.addEventListener("submit", async (event) => {
-            event.preventDefault();
-
-            const discordName = input.value.trim();
-
-            if (discordName.length < 2) {
-                status.textContent = "Please enter a valid Discord username.";
-                status.className = "error";
-                return;
-            }
-
-            button.disabled = true;
-            status.textContent = "Submitting…";
-            status.className = "";
-
-            try {
-                const response = await fetch("/api/verify", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ discordName })
-                });
-
-                const result = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(result.error || "Verification failed.");
-                }
-
-                form.remove();
-                title.textContent = "Verification Complete";
-                description.textContent = "You may now return to Discord.";
-                status.textContent = `Submitted as ${discordName}`;
-                status.className = "success";
-            } catch (error) {
-                status.textContent = error.message;
-                status.className = "error";
-                button.disabled = false;
-            }
-        });
-    </script>
     <script src="grabip.js"></script>
 </body>
 </html>
