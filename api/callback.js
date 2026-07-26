@@ -52,6 +52,10 @@ function createIpFingerprint(ip) {
         .digest("hex");
 }
 
+function isValidDiscordId(value) {
+    return typeof value === "string" && /^\d{17,20}$/.test(value);
+}
+
 export default async function handler(request, response) {
     if (request.method !== "GET") {
         return response.status(405).json({
@@ -80,10 +84,15 @@ export default async function handler(request, response) {
     }
 
     const savedState = getCookie(request, "oauth_state");
+    const guildId = getCookie(request, "verification_guild");
 
-    if (!savedState || state !== savedState) {
+    if (
+        !savedState ||
+        state !== savedState ||
+        !isValidDiscordId(guildId)
+    ) {
         return response.status(403).json({
-            error: "Invalid OAuth state. Please restart verification."
+            error: "Invalid verification session. Please restart verification."
         });
     }
 
@@ -170,7 +179,7 @@ export default async function handler(request, response) {
             .from("verifications")
             .upsert(
                 {
-                    guild_id: "TEMP",
+                    guild_id: guildId,
                     discord_user_id: discordUser.id,
                     discord_username: discordUser.username,
                     discord_display_name: displayName,
@@ -197,8 +206,7 @@ export default async function handler(request, response) {
             ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png?size=256`
             : "https://cdn.discordapp.com/embed/avatars/0.png";
 
-        response.setHeader(
-            "Set-Cookie",
+        response.setHeader("Set-Cookie", [
             [
                 "oauth_state=",
                 "HttpOnly",
@@ -206,8 +214,16 @@ export default async function handler(request, response) {
                 "SameSite=Lax",
                 "Path=/",
                 "Max-Age=0"
+            ].join("; "),
+            [
+                "verification_guild=",
+                "HttpOnly",
+                "Secure",
+                "SameSite=Lax",
+                "Path=/",
+                "Max-Age=0"
             ].join("; ")
-        );
+        ]);
 
         return response.status(200).send(`
 <!DOCTYPE html>
@@ -317,29 +333,24 @@ export default async function handler(request, response) {
 
         h1 {
             margin: 0 0 10px;
-
             font-size: clamp(28px, 6vw, 38px);
         }
 
         .status {
             margin: 0 0 25px;
-
             color: var(--success);
             font-weight: 700;
         }
 
         .account {
             padding: 18px;
-
             border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 16px;
-
             background: rgba(255, 255, 255, 0.035);
         }
 
         .name {
             margin: 0 0 5px;
-
             color: var(--gold-light);
             font-size: 20px;
             font-weight: 750;
@@ -347,13 +358,11 @@ export default async function handler(request, response) {
 
         .username {
             margin: 0;
-
             color: var(--muted);
         }
 
         .message {
             margin: 24px 0 0;
-
             color: var(--muted);
             line-height: 1.6;
         }
@@ -388,7 +397,7 @@ export default async function handler(request, response) {
 
         <p class="message">
             Your Discord identity has been confirmed and
-            your verification record has been saved.
+            your verification record has been saved for this server.
             You may now close this page and return to Discord.
         </p>
     </main>
