@@ -36,14 +36,28 @@ export default async function handler(request, response) {
         discord_user_id
     } = request.body;
 
-    const { data } = await supabase
+    const { data: verification } = await supabase
         .from("verifications")
         .select("*")
         .eq("guild_id", guild_id)
         .eq("discord_user_id", discord_user_id)
         .maybeSingle();
 
+    if (!verification) {
+        return response.json({
+            verified: false
+        });
+    }
+
+    const { data: settings } = await supabase
+        .from("guild_settings")
+        .select("verified_role_id, log_channel_id")
+        .eq("guild_id", guild_id)
+        .maybeSingle();
+
     return response.json({
-        verified: !!data
+        verified: true,
+        verified_role_id: settings?.verified_role_id ?? null,
+        log_channel_id: settings?.log_channel_id ?? null
     });
 }
