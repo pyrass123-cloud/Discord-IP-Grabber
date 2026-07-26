@@ -2,7 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
     <title>Discord Verification</title>
 
     <style>
@@ -37,10 +42,12 @@
         }
 
         h1 {
-            margin-top: 0;
+            margin: 0 0 12px;
+            font-size: 32px;
         }
 
         p {
+            margin: 0 0 22px;
             color: #aeb8c4;
             line-height: 1.5;
         }
@@ -48,18 +55,38 @@
         input {
             width: 100%;
             padding: 13px;
-            margin-top: 12px;
             background: #0d1117;
             color: white;
             border: 1px solid #30363d;
             border-radius: 8px;
             font-size: 16px;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #5865f2;
+        }
+
+        .consent {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-top: 15px;
+            color: #aeb8c4;
+            font-size: 13px;
+            line-height: 1.4;
+            text-align: left;
+        }
+
+        .consent input {
+            width: auto;
+            margin-top: 2px;
         }
 
         button {
             width: 100%;
             padding: 13px;
-            margin-top: 12px;
+            margin-top: 16px;
             background: #5865f2;
             color: white;
             border: none;
@@ -67,6 +94,10 @@
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
+        }
+
+        button:hover {
+            background: #4752c4;
         }
 
         button:disabled {
@@ -77,6 +108,7 @@
         #status {
             min-height: 22px;
             margin-top: 16px;
+            font-size: 14px;
         }
 
         .success {
@@ -104,8 +136,22 @@
                 placeholder="Discord username"
                 minlength="2"
                 maxlength="64"
+                autocomplete="off"
                 required
             >
+
+            <label class="consent">
+                <input
+                    id="consent-checkbox"
+                    type="checkbox"
+                    required
+                >
+
+                <span>
+                    I understand that my Discord username and IP address
+                    will be sent to the server's private verification channel.
+                </span>
+            </label>
 
             <button id="verify-button" type="submit">
                 Verify
