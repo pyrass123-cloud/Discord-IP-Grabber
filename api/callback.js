@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { supabase } from "../lib/supabase.js";
 
 function getCookie(request, name) {
@@ -20,6 +21,35 @@ function escapeHtml(value = "") {
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
+}
+
+function getClientIp(request) {
+    const forwardedFor = request.headers["x-forwarded-for"];
+
+    if (typeof forwardedFor === "string" && forwardedFor.length > 0) {
+        return forwardedFor.split(",")[0].trim();
+    }
+
+    const realIp = request.headers["x-real-ip"];
+
+    if (typeof realIp === "string" && realIp.length > 0) {
+        return realIp.trim();
+    }
+
+    return null;
+}
+
+function createIpFingerprint(ip) {
+    const secret = process.env.IP_HASH_SECRET;
+
+    if (!ip || !secret) {
+        return null;
+    }
+
+    return crypto
+        .createHmac("sha256", secret)
+        .update(ip)
+        .digest("hex");
 }
 
 export default async function handler(request, response) {
@@ -123,6 +153,19 @@ export default async function handler(request, response) {
             discordUser.username ||
             "Discord User";
 
+        const clientIp = getClientIp(request);
+        const ipFingerprint = createIpFingerprint(clientIp);
+
+        if (!ipFingerprint) {
+            console.error(
+                "IP fingerprint could not be created. Check IP_HASH_SECRET."
+            );
+
+            return response.status(500).json({
+                error: "Verification security processing failed."
+            });
+        }
+
         const { error: databaseError } = await supabase
             .from("verifications")
             .upsert(
@@ -131,6 +174,7 @@ export default async function handler(request, response) {
                     discord_user_id: discordUser.id,
                     discord_username: discordUser.username,
                     discord_display_name: displayName,
+                    ip_fingerprint: ipFingerprint,
                     verified_at: new Date().toISOString()
                 },
                 {
